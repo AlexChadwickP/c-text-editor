@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
+#include <stdio.h>
+#include <ctype.h>
 
 struct termios orig_termios;
 
@@ -30,6 +32,11 @@ void enableRawMode() {
 int main() {
     enableRawMode();
     char c;
-    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q');
+    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+        if (iscntrl(c))
+            printf("%d\n");
+        else
+            printf("%d ('%c')\n");
+    }
     return 0;
 }
