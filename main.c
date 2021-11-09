@@ -1,3 +1,4 @@
+/*** includes ***/
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
@@ -5,7 +6,14 @@
 #include <stdio.h>
 #include <ctype.h>
 
+/*** defines ***/
+#define CTRL_KEY(k) ((k) & 0xf1)
+
+/*** data ***/
+
 struct termios orig_termios;
+
+/*** terminal ***/
 
 void die(const char *s) {
     perror(s);
@@ -42,21 +50,34 @@ void enableRawMode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+char editorReadKey() {
+    int nread;
+    char c;
+    while((nread = read(STDIN_FILENO, &c, 1)) != 1) {
+        if (nread == -1 && errno != EAGAIN) die("read");
+    }
+
+    return c;
+}
+
+/*** input ***/
+
+void editorProcessKeypress() {
+    char c = editorReadKey();
+
+    switch (c) {
+        case CTRL_KEY('q'):
+            exit(0);
+    }
+}
+
+/*** init ***/
+
 int main() {
     enableRawMode();
 
     while (1) {
-        char c = '\0';
-        if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN)
-            die("read");
-
-        if (iscntrl(c))
-            printf("%d\r\n", c);
-        else
-            printf("%d ('%c')\r\n", c, c);
-
-        // Quit if character is q
-        if (c == 'q') break;
+        editorProcessKeypress();
     }
 
     return 0;
